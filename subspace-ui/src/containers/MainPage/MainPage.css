@@ -1,0 +1,18 @@
+.main-page {
+  width: 100%;
+}
+.main-page > div {
+  display: flex;
+  padding: 35px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+}
+
+.ui.header .content {
+  min-width: 100%;
+}
+.ui.input {
+  min-width: 100%;
+}
