@@ -1,0 +1,12 @@
+session_name: Ethereum
+windows:
+- window_name: Geth
+  layout: tiled
+  shell_command_before:
+  - cd .
+  panes:
+  - ./start1.sh
+  - ./start2.sh
+  - sleep 10 && geth attach node1/geth.ipc
+  - sleep 10 && geth attach node2/geth.ipc
+
