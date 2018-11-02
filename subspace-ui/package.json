@@ -9,17 +9,17 @@
     "react-dom": "^16.6.0",
     "react-router": "^4.3.1",
     "react-router-dom": "^4.3.1",
-    "react-scripts-ts": "3.1.0",
+    "react-scripts-ts": "^3.1.0",
     "request-promise": "^4.2.2",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^0.83.0",
     "web3": "^1.0.0-beta.36"
   },
   "scripts": {
-    "start": "react-scripts-ts start",
-    "build": "react-scripts-ts build",
-    "test": "react-scripts-ts test --env=jsdom",
-    "eject": "react-scripts-ts eject"
+    "start": "./node_modules/.bin/react-scripts-ts start",
+    "build": "./node_modules/.bin/react-scripts-ts build",
+    "test": "./node_modules/.bin/react-scripts-ts test --env=jsdom",
+    "eject": "./node_modules/.bin/react-scripts-ts eject"
   },
   "devDependencies": {
     "@types/history": "^4.7.2",
