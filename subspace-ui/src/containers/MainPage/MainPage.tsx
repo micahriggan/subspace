@@ -31,11 +31,12 @@ export class MainPage extends Web3Component<{}, IState> {
     this.propsalComponent = this.propsalComponent.bind(this);
     this.signerComponent = this.signerComponent.bind(this);
     this.handleProposalUpdate = this.handleProposalUpdate.bind(this);
-    this.handleFaucetRequestUpdate= this.handleFaucetRequestUpdate.bind(this);
+    this.handleFaucetRequestUpdate = this.handleFaucetRequestUpdate.bind(this);
   }
   public async componentDidMount() {
     const signers = (await this.cliqueService.getSigners()) || [];
-    const proposals = (await this.cliqueService.getProposals()) || [];
+    const proposals =
+      Object.keys(await this.cliqueService.getProposals()) || [];
     const { address } = FaucetContstants;
     const faucetBalance = this.getWeb3()
       .utils.fromWei(await this.getWeb3().eth.getBalance(address), "ether")
@@ -49,8 +50,8 @@ export class MainPage extends Web3Component<{}, IState> {
     return () => this.cliqueService.propose(address);
   }
 
-  public discardValidator(address: string) {
-    return () => this.cliqueService.discard(address);
+  public disagreeProposal(address: string) {
+    return () => this.cliqueService.propose(address, false);
   }
 
   public handleProposalUpdate(event: React.ChangeEvent<HTMLInputElement>) {
@@ -88,7 +89,7 @@ export class MainPage extends Web3Component<{}, IState> {
             <Button
               basic={true}
               color="red"
-              onClick={this.discardValidator(proposer)}
+              onClick={this.disagreeProposal(proposer)}
             >
               Decline
             </Button>
@@ -121,7 +122,7 @@ export class MainPage extends Web3Component<{}, IState> {
             <Button
               basic={true}
               color="red"
-              onClick={this.discardValidator(signer)}
+              onClick={this.disagreeProposal(signer)}
             >
               Decline
             </Button>
@@ -200,7 +201,10 @@ export class MainPage extends Web3Component<{}, IState> {
                 basic={true}
                 color="green"
                 onClick={this.requestEther(this.state.faucetRequest)}
-              > Request Funds </Button>
+              >
+                {" "}
+                Request Funds{" "}
+              </Button>
             }
           />
         </div>

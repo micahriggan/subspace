@@ -9,18 +9,21 @@ export class CliqueService {
     return this.callAsync("clique_getSigners");
   }
   public getProposals() {
-    return this.callAsync("clique_getProposals");
+    return this.callAsync("clique_proposals");
   }
 
-  public propose(signer: string) {
-    return this.callAsync("clique_propose", [signer]);
+  public propose(signer: string, agree: boolean = true) {
+    return this.callAsync("clique_propose", [signer, agree]);
   }
 
   public discard(signer: string) {
     return this.callAsync("clique_discard", [signer]);
   }
 
-  private callAsync(method: string, params: string[] = []): Promise<any> {
+  private callAsync(
+    method: string,
+    params: Array<string | number | boolean> = []
+  ): Promise<any> {
     return new Promise((resolve, reject) => {
       try {
         this.web3.currentProvider.send(
@@ -30,11 +33,12 @@ export class CliqueService {
             params: [],
             id: createRandomId()
           },
-          (err, resp) => {
+          (err, resp: any) => {
             if (err) {
               console.error(method, err);
               reject(err);
             } else {
+              console.log(resp);
               resolve(resp.result);
             }
           }
