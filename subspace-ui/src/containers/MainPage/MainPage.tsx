@@ -1,59 +1,73 @@
 import * as React from "react";
 import { Web3Component } from "../../components/Web3/Web3";
 import { Input, Header, Button, Table } from "semantic-ui-react";
-import IdIterator = require("json-rpc-random-id");
+import { CliqueService } from "../../services/Clique";
+import { FaucetContstants } from "../../constants/faucet";
+import { FaucetService } from "../../services/Faucet";
 import "./MainPage.css";
-console.log(IdIterator);
-const createRandomId = IdIterator();
-console.log(createRandomId());
 
 interface IState {
   signers: string[];
   proposals: string[];
+  proposal: string;
   faucetBalance: string;
+  faucetRequest: string;
 }
 export class MainPage extends Web3Component<{}, IState> {
   public state: IState = {
     proposals: [],
     signers: [],
-    faucetBalance: "0"
+    faucetBalance: "0",
+    proposal: "",
+    faucetRequest: ""
   };
+
+  public cliqueService: CliqueService;
+  public faucetService: FaucetService;
   constructor(props: {}) {
     super(props);
+    this.cliqueService = new CliqueService(this.getWeb3());
+    this.faucetService = new FaucetService("http://localhost:5555");
+    this.propsalComponent = this.propsalComponent.bind(this);
+    this.signerComponent = this.signerComponent.bind(this);
+    this.handleProposalUpdate = this.handleProposalUpdate.bind(this);
+    this.handleFaucetRequestUpdate= this.handleFaucetRequestUpdate.bind(this);
   }
-  public componentDidMount() {
-    this.getWeb3().currentProvider.send(
-      {
-        method: "clique_getSigners",
-        jsonrpc: "2.0",
-        params: [],
-        id: createRandomId()
-      },
-      (err, resp) => {
-        if (!err && resp.result) {
-          this.setState({ signers: resp.result });
-        }
-      }
-    );
-    this.getWeb3().currentProvider.send(
-      {
-        method: "clique_getProposals",
-        jsonrpc: "2.0",
-        params: [],
-        id: createRandomId()
-      },
-      (err, resp) => {
-        if (!err && resp.result) {
-          this.setState({ proposals: resp.result });
-        }
-      }
-    );
+  public async componentDidMount() {
+    const signers = (await this.cliqueService.getSigners()) || [];
+    const proposals = (await this.cliqueService.getProposals()) || [];
+    const { address } = FaucetContstants;
+    const faucetBalance = this.getWeb3()
+      .utils.fromWei(await this.getWeb3().eth.getBalance(address), "ether")
+      .toString();
+    this.setState({ signers });
+    this.setState({ proposals });
+    this.setState({ faucetBalance });
+  }
 
+  public proposeValidator(address: string) {
+    return () => this.cliqueService.propose(address);
+  }
+
+  public discardValidator(address: string) {
+    return () => this.cliqueService.discard(address);
+  }
+
+  public handleProposalUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ proposal: event.target.value });
+  }
+
+  public handleFaucetRequestUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ faucetRequest: event.target.value });
+  }
+
+  public requestEther(address: string) {
+    return () => this.faucetService.requestEther(address);
   }
 
   public propsalComponent(proposer: string) {
     return (
-      <Table.Row>
+      <Table.Row key={proposer}>
         <Table.Cell>
           <Header as="h4">
             <Header.Content>
@@ -64,10 +78,18 @@ export class MainPage extends Web3Component<{}, IState> {
         </Table.Cell>
         <Table.Cell>
           <div className="ui two buttons">
-            <Button basic={true} color="green">
+            <Button
+              basic={true}
+              color="green"
+              onClick={this.proposeValidator(proposer)}
+            >
               Approve
             </Button>
-            <Button basic={true} color="red">
+            <Button
+              basic={true}
+              color="red"
+              onClick={this.discardValidator(proposer)}
+            >
               Decline
             </Button>
           </div>
@@ -78,7 +100,7 @@ export class MainPage extends Web3Component<{}, IState> {
 
   public signerComponent(signer: string) {
     return (
-      <Table.Row>
+      <Table.Row key={signer}>
         <Table.Cell>
           <Header as="h4">
             <Header.Content>
@@ -89,10 +111,18 @@ export class MainPage extends Web3Component<{}, IState> {
         </Table.Cell>
         <Table.Cell>
           <div className="ui two buttons">
-            <Button basic={true} color="green">
+            <Button
+              basic={true}
+              color="green"
+              onClick={this.proposeValidator(signer)}
+            >
               Approve
             </Button>
-            <Button basic={true} color="red">
+            <Button
+              basic={true}
+              color="red"
+              onClick={this.discardValidator(signer)}
+            >
               Decline
             </Button>
           </div>
@@ -117,17 +147,25 @@ export class MainPage extends Web3Component<{}, IState> {
 
   public newValidator() {
     return (
-      <Table.Row>
+      <Table.Row key="new">
         <Table.Cell>
           <Header as="h4">
             <Header.Content>
-              <Input placeholder="0x0000000000000000000000000000000000000000" />
+              <Input
+                placeholder="0x0000000000000000000000000000000000000000"
+                value={this.state.proposal}
+                onChange={this.handleProposalUpdate}
+              />
             </Header.Content>
           </Header>
         </Table.Cell>
         <Table.Cell>
           <div className="ui two buttons">
-            <Button basic={true} color="green">
+            <Button
+              basic={true}
+              color="green"
+              onClick={this.proposeValidator(this.state.proposal)}
+            >
               Request
             </Button>
           </div>
@@ -149,6 +187,22 @@ export class MainPage extends Web3Component<{}, IState> {
         <div>
           <Header>Requested Validators</Header>
           {this.validatorTable(propsalComponents.concat(this.newValidator()))}
+        </div>
+        <div>
+          <Header>Faucet Balance</Header>
+          <div> {Number(this.state.faucetBalance).toExponential()} ETH </div>
+          <Input
+            placeholder="0x0000000000000000000000000000000000000000"
+            value={this.state.faucetRequest}
+            onChange={this.handleFaucetRequestUpdate}
+            action={
+              <Button
+                basic={true}
+                color="green"
+                onClick={this.requestEther(this.state.faucetRequest)}
+              > Request Funds </Button>
+            }
+          />
         </div>
       </div>
     );
